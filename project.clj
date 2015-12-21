@@ -6,4 +6,5 @@
   :repositories [["clojars" {:sign-releases false}]]
   :jar-exclusions [#".DS_Store"]
   :dependencies [[org.clojure/clojure "1.7.0" :scope "provided"]
-                 [com.github.warmuuh/libsass-maven-plugin "0.1.6-libsass_3.2.4"]])
+                 [com.github.warmuuh/libsass-maven-plugin "0.1.6-libsass_3.2.4"]
+                 [hawk "0.2.5"]])
