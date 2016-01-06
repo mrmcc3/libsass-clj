@@ -73,8 +73,7 @@
       .getPath))
 
 (defn sass-file?
-  "checks if the given file has a scss/sass extension
-  and doesn't start with an undescore."
+  "checks if the given file has a scss/sass extension."
   [f]
   (and (not (.isDirectory f))
        (or (.endsWith (.getName f) ".scss")
