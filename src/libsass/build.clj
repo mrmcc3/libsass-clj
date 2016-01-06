@@ -117,6 +117,23 @@
                   (merge paths (dir->paths output-dir source-path)))]
     (build-files! (reduce reducer {} source-paths) opts)))
 
+(defn clean
+  "remove all build artifacts if they exist. this function first finds
+  all the output paths then safely removes them."
+  [source-paths {:keys [output-dir]}]
+  (let [reducer (fn [paths source-path]
+                  (merge paths (dir->paths output-dir source-path)))
+        output-paths (vals (reduce reducer {} source-paths))]
+    ;; remove files
+    (doseq [path (set output-paths)]
+      (when (.exists (io/file path))
+        (io/delete-file path)))
+    ;; remove any empty directories
+    (doseq [f (file-seq (io/file output-dir))]
+      (when (.isDirectory f)
+        (io/delete-file f true)))
+    (io/delete-file output-dir true)))
+
 (defn watch
   "watch source-paths for file changes and recompile.
   On create/modify: without inspecting the import statements of all the
@@ -160,6 +177,8 @@
 
   (build ["scss"] {:output-dir "public/compiled-css"
                    :style      :compressed})
+
+  (clean ["scss"] {:output-dir "public/compiled-css"})
 
   (watch ["scss"] {:output-dir "public/compiled-css"
                    :source-map true})

@@ -10,7 +10,6 @@ via JNA (wraps libsass java library http://sass-lang.com/libsass#java)
 * write some usage docs
 * support all libsass options
   * currently only inline source-maps are supported
-* add clean function
 * some tests over just repl examples?
 
 
