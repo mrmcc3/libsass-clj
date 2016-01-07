@@ -117,6 +117,14 @@
                   (merge paths (dir->paths output-dir source-path)))]
     (build-files! (reduce reducer {} source-paths) opts)))
 
+(defn clean-empty-dirs
+  "recursively attempts to delete empty directories"
+  [root]
+  (when (.isDirectory root)
+    (doseq [child-file (.listFiles root)]
+      (clean-empty-dirs child-file))
+    (io/delete-file root true)))
+
 (defn clean
   "remove all build artifacts if they exist. this function first finds
   all the output paths then safely removes them."
@@ -124,15 +132,10 @@
   (let [reducer (fn [paths source-path]
                   (merge paths (dir->paths output-dir source-path)))
         output-paths (vals (reduce reducer {} source-paths))]
-    ;; remove files
     (doseq [path (set output-paths)]
       (when (.exists (io/file path))
         (io/delete-file path)))
-    ;; remove any empty directories
-    (doseq [f (file-seq (io/file output-dir))]
-      (when (.isDirectory f)
-        (io/delete-file f true)))
-    (io/delete-file output-dir true)))
+    (clean-empty-dirs (io/file output-dir))))
 
 (defn watch
   "watch source-paths for file changes and recompile.
