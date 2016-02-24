@@ -2,30 +2,50 @@
   (:require [clojure.java.io :as io]
             [clojure.string :as str]
             [hawk.core :as hawk])
-  (:import [wrm.libsass SassCompiler
-                        SassCompiler$OutputStyle
-                        SassCompiler$InputSyntax]))
+  (:import [io.bit3.jsass Options OutputStyle]))
 
-(defn opts->style
-  "inspects the compiler options and returns the libsass output style"
-  [opts]
-  (case (:style opts)
-    :compact SassCompiler$OutputStyle/compact
-    :compressed SassCompiler$OutputStyle/compressed
-    SassCompiler$OutputStyle/expanded))
+(defn opts->jsass
+  "given a map of compiler options construct jsass options"
+  [{:keys [source-map source-comments output-style precision]}]
+  (let [opts (Options.)]
+    (cond
+      (nil? source-map)
+      (do
+        (.setSourceMapContents opts false)
+        (.setSourceMapEmbed opts false)
+        (.setOmitSourceMapUrl opts true))
+      (= source-map :inline)
+      (do
+        (.setSourceMapContents opts false)
+        (.setSourceMapEmbed opts true)
+        (.setOmitSourceMapUrl opts false))
+      :else
+      (println "source-map option is unknown or not yet implemented."))
+    (when precision
+      (.setPrecision opts precision))
+    (when source-comments
+      (.setSourceComments opts true))
+    (.setOutputStyle
+      opts
+      (case output-style
+        :nested OutputStyle/NESTED
+        :compact OutputStyle/COMPACT
+        :compressed OutputStyle/COMPRESSED
+        OutputStyle/EXPANDED))
+    opts))
 
-(defn opts->compiler
-  "given a map of compiler options create and setup the libsass copmiler"
-  [opts]
-  (doto (SassCompiler.)
-    (.setEmbedSourceMapInCSS (get opts :source-map false))
-    (.setEmbedSourceContentsInSourceMap false)
-    (.setGenerateSourceComments false)
-    (.setGenerateSourceMap (get opts :source-map false))
-    (.setIncludePaths nil)
-    (.setOmitSourceMappingURL false)
-    (.setOutputStyle (opts->style opts))
-    (.setPrecision (or (:precision opts) 10))))
+(def jsass-compiler (io.bit3.jsass.Compiler.))
+
+(defn compile!
+  "given in/out paths and options use the jsass compiler to produce the output"
+  [in-path out-path jsass-opts]
+  (io/make-parents out-path)
+  (let [output (.compileFile
+                 jsass-compiler
+                 (-> in-path io/file .toURI)
+                 (-> out-path io/file .toURI)
+                 jsass-opts)]
+    (spit out-path (.getCss output))))
 
 (defn input-ext
   "given a [input-path output-path] pair return a keyword representing
@@ -36,12 +56,6 @@
     (.endsWith input-path ".sass") :sass
     :else nil))
 
-(defn compile!
-  "given a compiler and in/out paths perform compilation"
-  [compiler in out]
-  (io/make-parents out)
-  (spit out (-> compiler (.compileFile in out out) .getCssOutput)))
-
 (defn build-files!
   "paths is a map of input sass/scss absolute paths to output css
   absolute paths. opts is the map of compiler options.
@@ -51,16 +65,16 @@
     (empty? paths)
     nil
     (apply distinct? (vals paths))
-    (let [compiler (opts->compiler opts)
+    (let [jsass-opts (opts->jsass opts)
           {:keys [scss sass]} (group-by input-ext paths)]
       (when scss
-        (.setInputSyntax compiler SassCompiler$InputSyntax/scss))
-      (doseq [[in out] scss]
-        (compile! compiler in out))
+        (.setIsIndentedSyntaxSrc jsass-opts false))
+      (doseq [[in-path out-path] scss]
+        (compile! in-path out-path jsass-opts))
       (when sass
-        (.setInputSyntax compiler SassCompiler$InputSyntax/sass))
-      (doseq [[in out] sass]
-        (compile! compiler in out)))
+        (.setIsIndentedSyntaxSrc jsass-opts true))
+      (doseq [[in-path out-path] sass]
+        (compile! in-path out-path jsass-opts)))
     :else
     (throw (Exception. "libsass: output files not distinct"))))
 
@@ -178,13 +192,14 @@
 
   (build-files! *1 {})
 
-  (build ["scss"] {:output-dir "public/compiled-css"
-                   :style      :compressed})
+  (build ["scss"] {:output-dir   "public/compiled-css"
+                   :output-style :expanded
+                   :source-map   :inline})
 
   (clean ["scss"] {:output-dir "public/compiled-css"})
 
   (watch ["scss"] {:output-dir "public/compiled-css"
-                   :source-map true})
+                   :source-map :inline})
   (*1)
 
   )

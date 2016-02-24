@@ -5,6 +5,6 @@
             :url "http://www.eclipse.org/legal/epl-v10.html"}
   :repositories [["clojars" {:sign-releases false}]]
   :jar-exclusions [#".DS_Store"]
-  :dependencies [[org.clojure/clojure "1.7.0" :scope "provided"]
-                 [com.github.warmuuh/libsass-maven-plugin "0.1.7-libsass_3.2.4"]
-                 [hawk "0.2.5"]])
+  :dependencies [[org.clojure/clojure "1.8.0" :scope "provided"]
+                 [io.bit3/jsass "4.1.0"]
+                 [hawk "0.2.10"]])
