@@ -6,5 +6,5 @@
   :repositories [["clojars" {:sign-releases false}]]
   :jar-exclusions [#".DS_Store"]
   :dependencies [[org.clojure/clojure "1.8.0" :scope "provided"]
-                 [io.bit3/jsass "4.1.0"]
+                 [io.bit3/jsass "5.0.0"]
                  [hawk "0.2.10"]])
