@@ -8,24 +8,22 @@ small clojure wrapper for [jsass](https://github.com/bit3/jsass)
 #### Examples
 
 ```clojure
-;; build all sass files in the scss directory, minify output
-(build ["scss"] {:output-dir   "public/compiled-css"
-                 :output-style :compressed})
+;; build all sass files in a directory with embedded source maps 
+;; return a map of results
+(build "test/sass-files" {:source-map {:embed true}})
+
+;; build all sass files in a directory, minify output and write to :output-dir
+(build ["test/sass-files"] {:output-dir   "public/compiled-css"
+                            :output-style :compressed})
 
 ;; clean build artifacts
-(clean ["scss"] {:output-dir "public/compiled-css"})
-
-;; watch files in the scss directory, build on changes, inline source maps
-(watch ["scss"] {:output-dir "public/compiled-css"
-                 :source-map :inline})
+(clean ["test/sass-files"] {:output-dir "public/compiled-css"})
 ```
 
 #### TODO
 
-* write some usage docs
+* write better usage docs/examples
 * support all jsass/libsass options
   * currently only inline source-maps are supported
-* some tests over just repl examples?
-* custom importers?
-
-
+* tests?
+* custom importers? webjars
