@@ -1,7 +1,8 @@
 (ns libsass.build
   (:require [clojure.java.io :as io]
             [clojure.string :as str])
-  (:import [io.bit3.jsass Options OutputStyle]))
+  (:import [io.bit3.jsass Options OutputStyle]
+           [java.net URI]))
 
 ;; ----------------------------------------------------------------------------
 ;; helpers
@@ -31,16 +32,13 @@
 (defn jsass-options [opts]
   (let [{:keys [source-comments source-map output-style
                 precision]} opts
-        {:keys [embed contents root file]} source-map
         opts (Options.)]
     (when precision (.setPrecision opts precision))
     (when source-comments (.setSourceComments opts true))
     (when-not source-map (.setOmitSourceMapUrl opts true))
     (when source-map
-      (when embed (.setSourceMapEmbed opts true))
-      (when contents (.setSourceMapContents opts true))
-      #_(when root (.setSourceMapRoot opts (uri root)))
-      #_(when file (.setSourceMapFile opts (uri file))))
+      (.setSourceMapEmbed opts true)
+      (.setSourceMapContents opts true))
     (.setOutputStyle
       opts
       (case output-style
