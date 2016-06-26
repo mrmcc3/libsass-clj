@@ -104,9 +104,6 @@
          (doto (io/file path) io/make-parents (spit css))))
      result)))
 
-;; ----------------------------------------------------------------------------
-;; clean
-
 (defn clean-empty-dirs [root]
   (when (.isDirectory root)
     (doseq [child (.listFiles root)]
@@ -117,5 +114,7 @@
   (doseq [[_ path] (input->paths input opts)]
     (let [f (io/file path)]
       (when (.exists f) (io/delete-file f))))
-  (doseq [[_ path] input]
-    (clean-empty-dirs (io/file path))))
+  (if (map? input)
+    (doseq [[_ path] input]
+      (clean-empty-dirs (io/file path)))
+    (clean-empty-dirs (-> opts :output-dir io/file))))
