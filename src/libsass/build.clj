@@ -114,9 +114,8 @@
     (io/delete-file root true)))
 
 (defn clean [input opts]
-  (when (map? input)
-    (doseq [[_ path] (input->paths input opts)]
-      (let [f (io/file path)]
-        (when (.exists f) (io/delete-file f))))
-    (doseq [[_ path] input]
-      (clean-empty-dirs (io/file path)))))
+  (doseq [[_ path] (input->paths input opts)]
+    (let [f (io/file path)]
+      (when (.exists f) (io/delete-file f))))
+  (doseq [[_ path] input]
+    (clean-empty-dirs (io/file path))))
