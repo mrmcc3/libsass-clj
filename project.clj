@@ -1,4 +1,4 @@
-(defproject mrmcc3/libsass-clj "0.1.8-SNAPSHOT"
+(defproject mrmcc3/libsass-clj "0.1.8"
   :description "clojure wrapper for libsass (via jsass)"
   :url "https://github.com/mrmcc3/libsass-clj"
   :license {:name "Eclipse Public License"

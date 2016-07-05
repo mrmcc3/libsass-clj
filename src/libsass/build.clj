@@ -30,14 +30,17 @@
 ;; options
 
 (defn jsass-options [out opts]
-  (let [{:keys [sass source-comments source-map output-style
-                precision fns]} opts
+  (let [{:keys [sass precision source-comments omit-source-map-url
+                source-map source-map-contents source-map-embed
+                output-style fns]} opts
         opts (Options.)]
     (when sass (.setIsIndentedSyntaxSrc opts true))
     (when precision (.setPrecision opts precision))
     (when source-comments (.setSourceComments opts true))
-    (when-not source-map (.setOmitSourceMapUrl opts true))
+    (when omit-source-map-url (.setOmitSourceMapUrl opts true))
     (when source-map (.setSourceMapFile opts (URI. (str out ".map"))))
+    (when source-map-contents (.setSourceMapContents opts true))
+    (when source-map-embed (.setSourceMapEmbed opts true))
     (when fns (.add (.getFunctionProviders opts) fns))
     (.setOutputStyle
       opts
@@ -103,7 +106,7 @@
        (when path
          (doto (io/file path) io/make-parents (spit css))
          (when (:source-map opts)
-           (doto (io/file (str path ".map")) (spit map)))))
+           (spit (io/file (str path ".map")) map))))
      result)))
 
 (defn clean-empty-dirs [root]
