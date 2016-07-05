@@ -29,16 +29,16 @@
 ;; ----------------------------------------------------------------------------
 ;; options
 
-(defn jsass-options [opts]
-  (let [{:keys [source-comments source-map output-style
-                precision]} opts
+(defn jsass-options [out opts]
+  (let [{:keys [sass source-comments source-map output-style
+                precision fns]} opts
         opts (Options.)]
+    (when sass (.setIsIndentedSyntaxSrc opts true))
     (when precision (.setPrecision opts precision))
     (when source-comments (.setSourceComments opts true))
     (when-not source-map (.setOmitSourceMapUrl opts true))
-    (when source-map
-      (.setSourceMapEmbed opts true)
-      (.setSourceMapContents opts true))
+    (when source-map (.setSourceMapFile opts (URI. (str out ".map"))))
+    (when fns (.add (.getFunctionProviders opts) fns))
     (.setOutputStyle
       opts
       (case output-style
@@ -53,14 +53,14 @@
 
 (def ^io.bit3.jsass.Compiler compiler (io.bit3.jsass.Compiler.))
 
-(defn compile-sass [^Options opts [in out]]
-  (.setIsIndentedSyntaxSrc opts (.endsWith in ".sass"))
+(defn compile-sass [opts [in out]]
   (let [out-uri (uri (if out out (css-ext in)))
+        opts (jsass-options out-uri (assoc opts :sass (.endsWith in ".sass")))
         result (.compileFile compiler (uri in) out-uri opts)]
     [in {:css (.getCss result) :map (.getSourceMap result) :path out}]))
 
 (defn build-css [paths opts]
-  (let [xform (map (partial compile-sass (jsass-options opts)))]
+  (let [xform (map (partial compile-sass opts))]
     (into {} xform paths)))
 
 ;; ----------------------------------------------------------------------------
@@ -99,9 +99,11 @@
   ([input] (build input {}))
   ([input opts]
    (let [result (-> input (input->paths opts) (build-css opts))]
-     (doseq [[_ {:keys [css path]}] result]
+     (doseq [[_ {:keys [css map path]}] result]
        (when path
-         (doto (io/file path) io/make-parents (spit css))))
+         (doto (io/file path) io/make-parents (spit css))
+         (when (:source-map opts)
+           (doto (io/file (str path ".map")) (spit map)))))
      result)))
 
 (defn clean-empty-dirs [root]
