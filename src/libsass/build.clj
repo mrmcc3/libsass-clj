@@ -27,6 +27,9 @@
     (str/replace-first path #"\.(scss|sass)$" ".css")))
 
 ;; ----------------------------------------------------------------------------
+;; importer
+
+;; ----------------------------------------------------------------------------
 ;; options
 
 (defn jsass-options [out opts]
@@ -98,16 +101,18 @@
 ;; ----------------------------------------------------------------------------
 ;; build
 
+(defn build-paths [paths opts]
+  (let [results (build-css paths opts)]
+    (doseq [[_ {:keys [css map path]}] results]
+      (when path
+        (doto (io/file path) io/make-parents (spit css))
+        (when (:source-map opts)
+          (spit (io/file (str path ".map")) map))))
+    results))
+
 (defn build
   ([input] (build input {}))
-  ([input opts]
-   (let [result (-> input (input->paths opts) (build-css opts))]
-     (doseq [[_ {:keys [css map path]}] result]
-       (when path
-         (doto (io/file path) io/make-parents (spit css))
-         (when (:source-map opts)
-           (spit (io/file (str path ".map")) map))))
-     result)))
+  ([input opts] (build-paths (input->paths input opts) opts)))
 
 (defn clean-empty-dirs [root]
   (when (.isDirectory root)
